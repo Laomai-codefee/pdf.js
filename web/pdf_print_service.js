@@ -23,6 +23,7 @@ import {
   shadow,
 } from "pdfjs-lib";
 import { getXfaHtmlForPrinting } from "./print_utils.js";
+import { AppOptions } from "./app_options.js";
 
 let activeService = null;
 let dialog = null;
@@ -85,6 +86,7 @@ class PDFPrintService {
     printResolution,
     printAnnotationStoragePromise = null,
   }) {
+    this.water_mark_img_obj = AppOptions.get("water_mark_img_obj");
     this.pdfDocument = pdfDocument;
     this.pagesOverview = pagesOverview;
     this.printContainer = printContainer;
@@ -191,6 +193,28 @@ class PDFPrintService {
     this.throwIfInactive();
     const img = document.createElement("img");
     const scratchCanvas = this.scratchCanvas;
+    /**
+     * 判断是否有水印
+     * 在打印之前将水印插入到要打印的canvas
+     */
+    if (this.water_mark_img_obj) {
+      const waterMarkCanvas = document.createElement("canvas");
+      waterMarkCanvas.width = this.water_mark_img_obj.width;
+      waterMarkCanvas.height = this.water_mark_img_obj.height;
+      const waterMarkCtx = waterMarkCanvas.getContext("2d");
+      waterMarkCtx.drawImage(
+        this.water_mark_img_obj,
+        0,
+        0,
+        this.water_mark_img_obj.width,
+        this.water_mark_img_obj.height
+      );
+      const ctx = scratchCanvas.getContext("2d");
+      const pattern = ctx.createPattern(waterMarkCanvas, "repeat");
+      ctx.fillStyle = pattern;
+      ctx.fillRect(0, 0, scratchCanvas.width, scratchCanvas.height);
+      ctx.fill();
+    }
     if ("toBlob" in scratchCanvas) {
       scratchCanvas.toBlob(function (blob) {
         img.src = URL.createObjectURL(blob);

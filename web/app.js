@@ -372,6 +372,54 @@ const PDFViewerApplication = {
         );
       }
     }
+    /**
+     * 判断地址栏参数是否有水印图片地址，这里我们定义参数名为water_mark_url
+     * 如果有，请求水印地址拿到水印图片base64，将base64转为图片
+     * 将图片base64 water_mark_img_base64 存入AppOptions
+     * 使用时调用 AppOptions.get("water_mark_img_base64")
+     * 将图片对象 water_mark_img_obj 存入AppOptions
+     * 使用时调用 AppOptions.get("water_mark_img_obj")
+     * json : {
+     *   "img": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAYAA...
+     * }
+     */
+    if (params.has("water_mark_url")) {
+      const water_mark_url = params.get("water_mark_url");
+      const resData = await (await fetch(water_mark_url)).json();
+      const imgObj = await this._loadImg(resData.img);
+      AppOptions.set("water_mark_img_base64", resData.img);
+      AppOptions.set("water_mark_img_obj", imgObj);
+    }
+  },
+
+  /**
+   * 加载图片并返回图片对象
+   * @param {string} imageSrc - 图片的 URL
+   * @returns {Promise<HTMLImageElement>} - 包含加载的图片元素
+   */
+  async _loadImg(imageSrc) {
+    // 创建一个新的 Image 对象
+    const image = new Image();
+    image.src = imageSrc;
+
+    // 返回一个 Promise，在图片加载完成后解析图片对象和 base64 数据
+    return new Promise((resolve, reject) => {
+      image.onload = () => {
+        // 创建一个 canvas 来绘制加载的图片并获取其 base64 数据
+        const canvas = document.createElement("canvas");
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0);
+        // 解析包含图片元素
+        resolve(image);
+      };
+      image.onerror = error => {
+        reject(
+          new Error(`Failed to load image from ${imageSrc}: ${error.message}`)
+        );
+      };
+    });
   },
 
   /**
@@ -463,6 +511,10 @@ const PDFViewerApplication = {
       enablePermissions: AppOptions.get("enablePermissions"),
       pageColors,
       mlManager: this.mlManager,
+      /**
+       * 将水印图片base64作为参数传给PDFViewer类，在pdf页面渲染时使用
+       */
+      water_mark_img_base64: AppOptions.get("water_mark_img_base64"),
     });
     this.pdfViewer = pdfViewer;
 
@@ -477,6 +529,10 @@ const PDFViewerApplication = {
         renderingQueue: pdfRenderingQueue,
         linkService: pdfLinkService,
         pageColors,
+        /**
+         * 将水印图片对象作为参数传递给PDFThumbnailViewer，缩略图渲染时使用
+         */
+        water_mark_img_obj: AppOptions.get("water_mark_img_obj"),
       });
       pdfRenderingQueue.setThumbnailViewer(this.pdfThumbnailViewer);
     }

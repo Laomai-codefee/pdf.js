@@ -92,10 +92,13 @@ class PDFThumbnailView {
     linkService,
     renderingQueue,
     pageColors,
+    water_mark_img_obj,
   }) {
     this.id = id;
     this.renderingId = "thumbnail" + id;
     this.pageLabel = null;
+    // 接收图像 obj
+    this.water_mark_img_obj = water_mark_img_obj;
 
     this.pdfPage = null;
     this.rotation = 0;
@@ -218,6 +221,29 @@ class PDFThumbnailView {
       throw new Error("#convertCanvasToImage: Rendering has not finished.");
     }
     const reducedCanvas = this.#reduceImage(canvas);
+
+    /**
+     * 判断是否有水印参数
+     * 在缩略图canvas上绘制水印, 可适当按比例调整下水印大小
+     */
+    if (this.water_mark_img_obj) {
+      const waterMarkCanvas = document.createElement("canvas");
+      waterMarkCanvas.width = this.water_mark_img_obj.width / 10;
+      waterMarkCanvas.height = this.water_mark_img_obj.height / 10;
+      const waterMarkCtx = waterMarkCanvas.getContext("2d");
+      waterMarkCtx.drawImage(
+        this.water_mark_img_obj,
+        0,
+        0,
+        waterMarkCanvas.width,
+        waterMarkCanvas.height
+      );
+      const ctx = reducedCanvas.getContext("2d");
+      const pattern = ctx.createPattern(waterMarkCanvas, "repeat");
+      ctx.fillStyle = pattern;
+      ctx.fillRect(0, 0, reducedCanvas.width, reducedCanvas.height);
+      ctx.fill();
+    }
 
     const image = document.createElement("img");
     image.className = "thumbnailImage";

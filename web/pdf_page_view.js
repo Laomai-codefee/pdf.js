@@ -49,6 +49,7 @@ import { StructTreeLayerBuilder } from "./struct_tree_layer_builder.js";
 import { TextAccessibilityManager } from "./text_accessibility.js";
 import { TextHighlighter } from "./text_highlighter.js";
 import { TextLayerBuilder } from "./text_layer_builder.js";
+import { Watermark } from "./watermark.js";
 import { XfaLayerBuilder } from "./xfa_layer_builder.js";
 
 /**
@@ -187,6 +188,9 @@ class PDFPageView {
     this.xfaLayer = null;
     this.structTreeLayer = null;
     this.drawLayer = null;
+
+    // 接收水印 base64
+    this.water_mark_img_base64 = options.water_mark_img_base64;
 
     const div = document.createElement("div");
     div.className = "page";
@@ -877,6 +881,15 @@ class PDFPageView {
       this.reset(); // Ensure that we reset all state to prevent issues.
     }
     const { div, l10n, pageColors, pdfPage, viewport } = this;
+    /**
+     * 在页面插入水印，挂载到 <div class="page" ...
+     */
+    if (this.water_mark_img_base64) {
+      // eslint-disable-next-line no-new
+      new Watermark(div, {
+        image: this.water_mark_img_base64,
+      });
+    }
 
     if (!pdfPage) {
       this.renderingState = RenderingStates.FINISHED;

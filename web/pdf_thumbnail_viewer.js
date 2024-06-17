@@ -57,7 +57,9 @@ class PDFThumbnailViewer {
     linkService,
     renderingQueue,
     pageColors,
+    water_mark_img_obj,
   }) {
+    this.water_mark_img_obj = water_mark_img_obj;
     this.container = container;
     this.eventBus = eventBus;
     this.linkService = linkService;
@@ -199,6 +201,10 @@ class PDFThumbnailViewer {
             linkService: this.linkService,
             renderingQueue: this.renderingQueue,
             pageColors: this.pageColors,
+            /**
+             * 将水印图片water_mark_img_obj以参数传给PDFThumbnailView
+             */
+            water_mark_img_obj: this.water_mark_img_obj,
           });
           this._thumbnails.push(thumbnail);
         }

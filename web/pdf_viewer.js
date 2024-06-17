@@ -268,6 +268,8 @@ class PDFViewer {
     this.downloadManager = options.downloadManager || null;
     this.findController = options.findController || null;
     this.#altTextManager = options.altTextManager || null;
+    // 接收水印 base64
+    this.water_mark_img_base64 = options.water_mark_img_base64 || null;
 
     if (this.findController) {
       this.findController.onIsPageVisible = pageNumber =>
@@ -929,6 +931,10 @@ class PDFViewer {
             pageColors,
             l10n: this.l10n,
             layerProperties: this._layerProperties,
+            /**
+             * 将水印图片base64以参数方式传到 PDFPageView类
+             */
+            water_mark_img_base64: this.water_mark_img_base64,
           });
           this._pages.push(pageView);
         }
